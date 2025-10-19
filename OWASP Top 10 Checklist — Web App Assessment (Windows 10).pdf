@@ -1,0 +1,60 @@
+```markdown
+# OWASP Top 10 Checklist — Web App Assessment (Windows 10 Lab)
+
+Target: OWASP Juice Shop (http://localhost:3000)  
+Prepared by: Mrshaukeen46  
+Date: 2025-10-19
+
+Instructions: For each item mark: Not Tested / Not Vulnerable / Vulnerable (evidence listed) / Fixed
+
+- A1 — Injection
+  - Status: Vulnerable (lab)
+  - Evidence: `screenshots/finding2_sqli_sqlmap.png`, `sqlmap_output.log`
+  - Notes: Parameterized queries not enforced.
+
+- A2 — Broken Authentication
+  - Status: Not Tested / Not Vulnerable
+  - Evidence:
+  - Notes: Manual checks recommended (password reset flows, MFA absence).
+
+- A3 — Sensitive Data Exposure
+  - Status: Vulnerable (lab)
+  - Evidence: `screenshots/finding5_secret_exposure.png`
+  - Notes: Secrets in client-side bundle.
+
+- A4 — XML External Entities (XXE)
+  - Status: Not Tested
+  - Evidence:
+  - Notes: No XML endpoints identified.
+
+- A5 — Broken Access Control
+  - Status: Vulnerable (lab)
+  - Evidence: `screenshots/finding3_idor.png`
+  - Notes: IDOR: missing server-side authorization.
+
+- A6 — Security Misconfiguration
+  - Status: Vulnerable (lab)
+  - Evidence: `screenshots/finding4_headers.png`, `nikto_report.txt`
+  - Notes: Missing security headers.
+
+- A7 — Cross-Site Scripting (XSS)
+  - Status: Vulnerable (lab)
+  - Evidence: `screenshots/finding1_stored_xss.png`
+  - Notes: Stored XSS via review input.
+
+- A8 — Insecure Deserialization
+  - Status: Not Tested
+  - Evidence:
+  - Notes: Test if application accepts serialized objects.
+
+- A9 — Using Components with Known Vulnerabilities
+  - Status: Not Tested / Partial
+  - Evidence: `zaproxy_report.xml`
+  - Notes: Run dependency scans (npm audit / Snyk).
+
+- A10 — Insufficient Logging & Monitoring
+  - Status: Not Tested
+  - Evidence:
+  - Notes: Check for missing audit logs, failed login alerts.
+
+```
