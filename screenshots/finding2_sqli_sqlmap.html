@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Simulated: sqlmap Output</title>
+  <style>
+    body { font-family: monospace; background:#0b1220; color:#e6eef8; padding:20px; }
+    .terminal { background:#020617; padding:18px; border-radius:6px; box-shadow:0 6px 14px rgba(2,6,23,.6); width:1000px; }
+    .line { white-space:pre-wrap; }
+    .highlight { color:#7ee787; font-weight:700; }
+    .warning { color:#ffcc66; }
+  </style>
+</head>
+<body>
+  <div class="terminal">
+<pre class="line">[INFO] using URL: http://localhost:3000/rest/products?q=1
+[INFO] testing parameter: q
+[INFO] heuristic (basic) test shows that the back-end is probably UNION query
+[INFO] testing 'AND boolean-based blind - WHERE or HAVING clause'
+[INFO] testing 'OR time-based blind'
+[CRITICAL] parameter q appears to be injectable (boolean-based blind)
+[INFO] fetching database names
+[INFO] retrieved: [juice_shop_db]
+[INFO] fetched tables for database: juice_shop_db
+[INFO] sqlmap resumed: [table: users] - columns: id, email, password, salt
+[WARNING] this is a SIMULATED sqlmap output for demonstration ONLY</pre>
+  </div>
+</body>
+</html>

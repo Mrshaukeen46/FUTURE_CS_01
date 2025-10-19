@@ -1,0 +1,8 @@
+- Nikto v2.1.6
++ Target IP:          127.0.0.1
++ Target Hostname:    localhost
++ Target Port:        3000
++ Server: nginx/1.18.0
++ The X-Frame-Options header is not present.
++ The X-Content-Type-Options header is not present.
++ This is a SIMULATED nikto report for screenshot/layout purposes only.
