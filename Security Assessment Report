@@ -1,0 +1,296 @@
+
+# Security Assessment Report — Web Application (Template & Windows 10 Runbook)
+
+Prepared for: Future Interns / Mrshaukeen46  
+Target (lab): OWASP Juice Shop (http://localhost:3000) — Windows 10 lab  
+Date: 2025-10-19
+
+---
+
+## Executive Summary
+
+This document is a hands-on security assessment template for web applications performed in a lab environment on Windows 10. It explains step-by-step how to set up the lab (OWASP Juice Shop), run automated and manual scans (OWASP ZAP, Burp Suite, sqlmap, Nikto), capture evidence (screenshots, logs), and produce a professional PDF deliverable. Example findings are included as demonstration artifacts — you must reproduce the scans locally and replace placeholders with your actual screenshots and logs.
+
+Purpose:
+- Identify common web application vulnerabilities (OWASP Top 10).
+- Provide reproduction steps, impact, and remediation advice.
+- Produce evidence and an exportable report for portfolio use.
+
+Scope:
+- Host: Windows 10 (local machine)
+- Target: Local instance of OWASP Juice Shop (recommended) at http://localhost:3000
+- Tools: Docker Desktop / WSL2, OWASP ZAP (Windows), Burp Suite Community (Windows), sqlmap (WSL2), Nikto (WSL2)
+
+Important: Only run tests against systems you own or explicit targets authorized for testing (this template is designed for local intentionally vulnerable apps).
+
+---
+
+## Environment Setup (Windows 10)
+
+1. Install Docker Desktop for Windows
+   - Download and install: https://www.docker.com/products/docker-desktop
+   - Ensure WSL2 integration is enabled (recommended) and Docker is running.
+
+2. (Optional but recommended) Install WSL2 with Ubuntu
+   - PowerShell (admin): `wsl --install -d Ubuntu`
+   - Open Ubuntu terminal, update: `sudo apt update && sudo apt upgrade -y`
+
+3. Install tools on Windows:
+   - OWASP ZAP (Windows MSI): https://www.zaproxy.org/download/
+   - Burp Suite Community (Windows): https://portswigger.net/burp/communitydownload
+   - Browser: Firefox (recommended for easier proxy cert import)
+
+4. Install tools in WSL2 (Ubuntu) for sqlmap / nikto:
+   - `sudo apt update && sudo apt install -y sqlmap nikto curl`
+   - If you prefer, you can run sqlmap/nikto inside a Docker or on Kali VM.
+
+5. Start Juice Shop (container)
+   - Open PowerShell or CMD:
+     `docker run --rm -p 3000:3000 bkimminich/juice-shop`
+   - Visit http://localhost:3000 to confirm the app is up.
+
+---
+
+## Proxy & Certificate Setup (ZAP / Burp)
+
+Use a dedicated browser profile for testing.
+
+Firefox proxy setup:
+- Menu -> Settings -> General -> Network Settings -> Manual proxy configuration.
+- For Burp: HTTP Proxy: 127.0.0.1 Port: 8080
+- For ZAP: HTTP Proxy: 127.0.0.1 Port: 8081 (or 8080 depending on your ZAP instance)
+
+Import CA certificate (so HTTPS traffic can be proxied):
+- ZAP: Tools -> Options -> Dynamic SSL Certificates -> Save Root CA -> in Firefox Preferences -> Privacy & Security -> View Certificates -> Import.
+- Burp: Proxy -> Options -> Import / Export CA certificate -> Save then import into Firefox.
+
+Test: Visit an HTTPS site (https://example.com). If the browser warns about certificate error then CA not imported correctly.
+
+---
+
+## Scanning Workflow (Windows 10)
+
+1. Recon & Crawl
+   - Open ZAP UI -> Quick Start -> Enter `http://localhost:3000` -> Attack
+   - Or use ZAP Spider to crawl site to discover endpoints.
+
+2. Passive & Active Scans (ZAP)
+   - Passive scan runs automatically as traffic flows through proxy.
+   - After crawling, in ZAP: Active Scan -> select target context -> Start Active Scan.
+   - Monitor alerts list.
+
+3. Manual verification (Burp + Repeater)
+   - Configure browser to use Burp proxy.
+   - Use Burp Repeater to craft and replay requests (XSS payloads, SQLi probes).
+   - Use Intruder for targeted fuzzing (Community edition has limits).
+
+4. Confirm SQL Injection (sqlmap) — run in WSL2
+   - Identify vulnerable parameter from proxy logs (e.g., `GET /rest/products?q=<value>`).
+   - Example command:
+     `sqlmap -u "http://localhost:3000/rest/products?q=1" -p q --batch --level=2 --risk=1 --threads=2`
+   - Save sqlmap output: `sqlmap_output.log`
+
+5. Server checks (Nikto) — run in WSL2
+   - `nikto -h http://localhost:3000 -output nikto_report.txt`
+
+6. Header checks (curl)
+   - `curl -I http://localhost:3000` or use browser DevTools -> Network -> Response Headers.
+
+7. Export reports
+   - ZAP: Reports -> Generate HTML report -> save `zaproxy_report.html` and XML `zaproxy_report.xml`.
+   - Burp: Save project or export issues (if applicable).
+   - Place all reports into `artifacts/` folder.
+
+---
+
+## Evidence Capture (screenshots & filenames)
+
+Take screenshots using Windows Snipping Tool or PrintScreen and save into a `screenshots/` folder inside your project. Name files exactly so you can drop them into the template.
+
+Required screenshots (placeholders included in report):
+- `screenshots/finding1_stored_xss.png` — shows stored XSS alert or JavaScript alert in the browser.
+- `screenshots/finding2_sqli_sqlmap.png` — sqlmap confirmation output or Burp showing injection.
+- `screenshots/finding3_idor.png` — Burp request/response showing different user's data accessed.
+- `screenshots/finding4_headers.png` — curl output or DevTools showing missing security headers.
+- `screenshots/finding5_secret_exposure.png` — devtools showing API key in client JS or repo file.
+- `screenshots/zap_scan_summary.png` — ZAP alerts summary view.
+
+Tip: Use consistent naming and store logs:
+- `zaproxy_report.html`, `zaproxy_report.xml`
+- `nikto_report.txt`
+- `sqlmap_output.log`
+- `burp_project.json` or exported issues
+
+---
+
+## Findings (Example / Template — Replace with your real results)
+
+Note: The items below are example findings commonly found in OWASP Juice Shop. Replace with your actual evidence.
+
+### Finding 1 — Stored Cross-Site Scripting (XSS)
+- Severity: High
+- Location: Product review form (POST /rest/feedback)
+- Evidence: `screenshots/finding1_stored_xss.png`
+- Reproduction:
+  1. Submit a review with payload `<script>alert('XSS-TEST')</script>`.
+  2. Visit product page -> alert dialog executes.
+- Impact: Script executes in other users' browsers -> session theft, CSRF escalation.
+- Remediation:
+  - Encode output in HTML contexts (HTML entity encoding).
+  - Apply input validation and a restrictive Content Security Policy (CSP).
+  - Sanitize at input and escape at render.
+
+### Finding 2 — SQL Injection (SQLi)
+- Severity: High
+- Location: Search parameter `q` in `/rest/products?q=`
+- Evidence: `screenshots/finding2_sqli_sqlmap.png`, `sqlmap_output.log`
+- Reproduction:
+  1. Use Burp to capture request.
+  2. Run: `sqlmap -u "http://localhost:3000/rest/products?q=1" -p q --batch`
+- Impact: Data exposure, possible data modification.
+- Remediation:
+  - Use prepared statements/ORM parameterization.
+  - Validate and whitelist input patterns.
+  - Employ DB user with least privileges and monitoring.
+
+### Finding 3 — Broken Access Control / IDOR
+- Severity: High
+- Location: `/api/user/orders/{orderId}`
+- Evidence: `screenshots/finding3_idor.png`
+- Reproduction:
+  1. As user A, view own order ID 10.
+  2. Change ID to 11 (belonging to user B) in request -> response returns user B's order.
+- Impact: Unauthorized data disclosure.
+- Remediation:
+  - Enforce server-side authorization checks: verify resource ownership.
+  - Use unguessable identifiers (UUIDs), but authorization is primary control.
+
+### Finding 4 — Missing Security Headers / Security Misconfiguration
+- Severity: Medium
+- Location: Site-wide responses
+- Evidence: `screenshots/finding4_headers.png`, `nikto_report.txt`
+- Observed missing headers:
+  - Content-Security-Policy
+  - X-Frame-Options
+  - X-Content-Type-Options
+- Remediation:
+  - Add security headers via web server or app middleware.
+  - Example headers:
+    - `X-Content-Type-Options: nosniff`
+    - `X-Frame-Options: DENY` or `Content-Security-Policy: frame-ancestors 'none'`
+    - `Content-Security-Policy: default-src 'self'; script-src 'self'`
+
+### Finding 5 — Secrets in Client Bundle / Configuration Exposure
+- Severity: Medium
+- Location: `main.*.js` or public config
+- Evidence: `screenshots/finding5_secret_exposure.png`
+- Reproduction:
+  1. Open DevTools -> Sources -> Inspect JS bundles -> observe API key.
+- Impact: Abuse of APIs, quota theft.
+- Remediation:
+  - Remove secrets from client code. Use server-side secrets & token exchange.
+  - Rotate any leaked keys and restrict scopes/IPs.
+
+---
+
+## OWASP Top 10 Mapping (example)
+
+- A1 — Injection: Finding 2 (SQLi)
+- A2 — Broken Authentication: (not found in this lab example)
+- A3 — Sensitive Data Exposure: Finding 5
+- A4 — XML External Entities (XXE): Not applicable in lab
+- A5 — Broken Access Control: Finding 3
+- A6 — Security Misconfiguration: Finding 4
+- A7 — Cross-Site Scripting (XSS): Finding 1
+- A8 — Insecure Deserialization: Not tested
+- A9 — Using Components with Known Vulnerabilities: Recommend SBOM & dependency scan
+- A10 — Insufficient Logging & Monitoring: Recommend logging improvement
+
+Include a complete OWASP Top 10 Checklist artifact (see separate checklist file).
+
+---
+
+## Risk Prioritization & Remediation Roadmap
+
+Priority 1 (Immediate)
+- Fix Stored XSS and SQLi: patch input handling and DB queries.
+- Enforce server-side authorization checks (IDOR).
+
+Priority 2 (Short Term)
+- Remove secrets from client bundles; rotate keys.
+- Add security headers and CSP.
+
+Priority 3 (Medium Term)
+- Dependency updates and SBOM review.
+- Logging, monitoring, and alerting setup.
+
+---
+
+## Deliverables to Produce (Artifacts)
+
+- `Security_Assessment_Report.pdf` (exported from this Markdown with real findings)
+- `OWASP_Top10_Checklist.md`
+- `zaproxy_report.html` and/or `zaproxy_report.xml`
+- `burp_project.json` or `burp_issues.xml`
+- `nikto_report.txt`
+- `sqlmap_output.log`
+- `screenshots/` folder with required images
+
+---
+
+## How to Export Final PDF on Windows 10
+
+Option A — Use VSCode + Markdown PDF extension:
+1. Open `Security_Assessment_Report.md` in VSCode.
+2. Install Markdown PDF extension.
+3. Export -> PDF.
+
+Option B — Use Pandoc (Windows)
+1. Install Pandoc: https://pandoc.org/installing.html
+2. Install TeX engine (MiKTeX) if needed.
+3. Command:
+   `pandoc Security_Assessment_Report.md -o Security_Assessment_Report.pdf --pdf-engine=xelatex`
+
+Option C — Copy into Word / Google Docs and Export:
+1. Open Markdown in an editor supporting Markdown -> copy/convert into Word.
+2. Save As -> PDF.
+
+---
+
+## Appendix: Exact Commands (Windows 10 + WSL2)
+
+PowerShell (run as Administrator)
+- Start Juice Shop:
+  `docker run --rm -p 3000:3000 bkimminich/juice-shop`
+
+WSL2 (Ubuntu)
+- Update & tools:
+  `sudo apt update && sudo apt install -y sqlmap nikto curl`
+
+sqlmap example:
+`sqlmap -u "http://localhost:3000/rest/products?q=1" -p q --batch --level=2 --risk=1 --threads=2 > sqlmap_output.log`
+
+Nikto example:
+`nikto -h http://localhost:3000 -output nikto_report.txt`
+
+ZAP headless (if using standalone ZAP on Windows, prefer GUI; headless invocation may vary)
+- Start ZAP via Start Menu -> OWASP ZAP (or run zap.bat in install dir).
+
+Curl header check:
+`curl -I http://localhost:3000 > headers_output.txt`
+
+---
+
+## Notes on Ethics & Safety
+
+Only test targets you own or have explicit permission to test. OWASP Juice Shop is intentionally vulnerable and safe to test locally. Never perform unauthorized scans on third-party websites or services.
+
+---
+
+## Placeholders & Next Steps
+
+- Replace all `screenshots/*.png` placeholders with your captured evidence.
+- Replace example outputs (sqlmap, ZAP) with the real logs from your scans.
+- Convert completed Markdown to PDF and include the artifacts in a deliverable zip.
+
+```
