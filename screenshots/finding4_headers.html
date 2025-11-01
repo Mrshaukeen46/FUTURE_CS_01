@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Simulated: curl -I Output (Headers)</title>
+  <style>
+    body{background:#0b1220;color:#e6eef8;font-family:monospace;padding:24px}
+    .box{width:900px;background:#041025;padding:14px;border-radius:6px}
+    .missing{color:#ffcc66}
+    pre{white-space:pre-wrap}
+  </style>
+</head>
+<body>
+  <div class="box">
+<pre>HTTP/1.1 200 OK
+Date: Sun, 19 Oct 2025 06:00:00 GMT
+Server: nginx/1.18.0
+Content-Type: text/html; charset=utf-8
+Content-Length: 4523
+Connection: keep-alive
+<!-- Notice: The following security headers are MISSING -->
+<span class="missing">Content-Security-Policy: (missing)</span>
+<span class="missing">X-Frame-Options: (missing)</span>
+<span class="missing">X-Content-Type-Options: (missing)</span>
+</pre>
+  </div>
+</body>
+</html>
